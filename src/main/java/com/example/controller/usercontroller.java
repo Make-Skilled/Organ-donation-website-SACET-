@@ -13,13 +13,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-
-
+import java.util.Map;
 
 @Controller
 public class usercontroller {
@@ -267,6 +266,40 @@ public class usercontroller {
         return "myrequests"; // Return the myrequests.html view
     }
 
+    @PutMapping("/api/requests/{requestId}/status")
+    @ResponseBody
+    public ResponseEntity<?> updateRequestStatus(
+            @PathVariable Long requestId,
+            @RequestBody Map<String, String> statusUpdate,
+            HttpSession session) {
+        
+        // Get the logged-in donor
+        donors donor = (donors) session.getAttribute("donor");
+        if (donor == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not authenticated");
+        }
+
+        try {
+            // Find the request
+            requests request = requestsRepo.findById(requestId)
+                    .orElseThrow(() -> new RuntimeException("Request not found"));
+
+            // Verify that the logged-in donor is the owner of this request
+            if (!request.getDonorUsername().equals(donor.getUsername())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Not authorized to update this request");
+            }
+
+            // Update the status
+            request.setStatus(statusUpdate.get("status").toUpperCase());
+            requestsRepo.save(request);
+
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error updating request: " + e.getMessage());
+        }
+    }
+
     // Logout for Donor
     @GetMapping("/donor/logout")
     public String donorLogout(HttpSession session) {
@@ -282,7 +315,4 @@ public class usercontroller {
         session.invalidate();
         return "redirect:/userlogin";
     }
-    
-
-
 }

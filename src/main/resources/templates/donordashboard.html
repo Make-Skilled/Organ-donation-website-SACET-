@@ -7,7 +7,6 @@
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
-        /* Retaining your original CSS */
         /* Base Reset and Typography */
         * {
             margin: 0;
@@ -78,7 +77,7 @@
 
         /* Table */
         .table-container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             overflow-x: auto;
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
@@ -105,32 +104,57 @@
             color: #444;
         }
 
-        /* Buttons */
-        .action-button {
-            padding: 8px 12px;
-            font-size: 0.9rem;
+        /* Status Badges */
+        .status {
             font-weight: 600;
-            color: white;
-            border: none;
+            padding: 5px 10px;
             border-radius: 5px;
+            text-transform: uppercase;
+        }
+
+        .pending {
+            background-color: #ffc107;
+            color: white;
+        }
+
+        .approved {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .rejected {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
             cursor: pointer;
-            transition: background 0.3s ease;
+            font-weight: 600;
+            transition: opacity 0.3s ease;
+            margin: 0 5px;
         }
 
-        .accept-button {
-            background-color: #4caf50;
+        .action-btn:hover {
+            opacity: 0.8;
         }
 
-        .accept-button:hover {
-            background-color: #43a047;
+        .accept-btn {
+            background-color: #28a745;
+            color: white;
         }
 
-        .reject-button {
-            background-color: #f44336;
+        .reject-btn {
+            background-color: #dc3545;
+            color: white;
         }
 
-        .reject-button:hover {
-            background-color: #e53935;
+        .action-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
         }
 
         /* Responsive Design */
@@ -139,7 +163,6 @@
                 font-size: 1.4rem;
             }
         }
-
     </style>
 </head>
 <body>
@@ -147,7 +170,6 @@
     <div class="navbar">
         <h1>Donor Dashboard</h1>
         <div class="nav-links">
-            <a href="#">Profile</a>
             <a href="/adddonation">Add Donation</a>
             <a href="/mydonation">My Donations</a>
             <a href="/donor/logout">Logout</a>
@@ -165,6 +187,7 @@
                         <th>Mobile Number</th>
                         <th>Organ Requested</th>
                         <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -173,15 +196,54 @@
                         <td th:text="${request.patientName}">Sample Patient</td>
                         <td th:text="${request.mobileNo}">1234567890</td>
                         <td th:text="${request.organName}">Kidney</td>
-                        <td th:text="${request.status}">Pending</td>
+                        <td>
+                            <span th:class="${request.status == 'PENDING' ? 'status pending' : (request.status == 'APPROVED' ? 'status approved' : 'status rejected')}" 
+                                  th:text="${request.status}">Status</span>
+                        </td>
+                        <td>
+                            <button th:if="${request.status == 'PENDING'}" 
+                                    class="action-btn accept-btn"
+                                    th:onclick="'updateRequestStatus(' + ${request.id} + ', \'APPROVED\')'">
+                                Accept
+                            </button>
+                            <button th:if="${request.status == 'PENDING'}" 
+                                    class="action-btn reject-btn"
+                                    th:onclick="'updateRequestStatus(' + ${request.id} + ', \'REJECTED\')'">
+                                Reject
+                            </button>
+                        </td>
                     </tr>
                     <!-- Show a message if no requests exist -->
                     <tr th:if="${#lists.isEmpty(requests)}">
-                        <td colspan="4">No donation requests available.</td>
+                        <td colspan="5">No donation requests available.</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
+
+    <script>
+        function updateRequestStatus(requestId, status) {
+            fetch(`/donor/api/requests/${requestId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: status })
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Reload the page to show updated status
+                    window.location.reload();
+                } else {
+                    alert('Failed to update status. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating status.');
+            });
+        }
+    </script>
 </body>
 </html>

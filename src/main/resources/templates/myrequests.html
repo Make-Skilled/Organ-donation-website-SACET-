@@ -138,7 +138,7 @@
     <div class="navbar">
         <h1>Organ Donation Dashboard</h1>
         <div class="nav-links">
-            <a href="/dashboard">Dashboard</a>
+            <a href="/user/dashboard">Dashboard</a>
             <a href="/myrequests">My Requests</a>
             <a href="/logout">Logout</a>
         </div>
@@ -165,7 +165,7 @@
                         <td th:text="${request.donorName}">Donor Name</td>
                         <td th:text="${request.donorUsername}">Uploaded By</td>
                         <td>
-                            <span th:class="${request.status == 'pending' ? 'status pending' : (request.status == 'approved' ? 'status approved' : 'status rejected')}" 
+                            <span th:class="${request.status == 'PENDING' ? 'status pending' : (request.status == 'APPROVED' ? 'status approved' : 'status rejected')}" 
                                   th:text="${request.status}">Status</span>
                         </td>
                     </tr>
